@@ -18,7 +18,12 @@ export default function EventDetails() {
     queryFn: ({ signal }) => fetchEvent({ id: params.id, signal }),
   });
 
-  const { mutate } = useMutation({
+  const {
+    mutate,
+    isPending: isPendingDeletion,
+    isError: isErrorDeleting,
+    error: deleteError,
+  } = useMutation({
     mutationFn: deleteEvent,
     onSuccess: () => {
       queryClient.invalidateQueries({
@@ -33,11 +38,11 @@ export default function EventDetails() {
     mutate({ id: params.id });
   }
 
-  function handleStartDelete(){
+  function handleStartDelete() {
     setIsDeleting(true);
   }
 
-  function handleStopDelete(){
+  function handleStopDelete() {
     setIsDeleting(false);
   }
 
@@ -98,14 +103,37 @@ export default function EventDetails() {
 
   return (
     <>
-    {isDeleting && (<Modal onClose={handleStopDelete}>
-      <h2>Are you sure?</h2>
-      <p>Do you really want to delete this event? This action cannot be undone.</p>
-      <div className='form-actions'>
-        <button onClick={handleStopDelete} className='button-text'>Cancel</button>
-        <button onClick={handleDelete} className='button'>Delete</button>
-      </div>
-    </Modal>)}
+      {isDeleting && (
+        <Modal onClose={handleStopDelete}>
+          <h2>Are you sure?</h2>
+          <p>
+            Do you really want to delete this event? This action cannot be
+            undone.
+          </p>
+          <div className="form-actions">
+            {isPendingDeletion && <p>Deleting. Please wait...</p>}
+            {!isPendingDeletion && (
+              <>
+                <button onClick={handleStopDelete} className="button-text">
+                  Cancel
+                </button>
+                <button onClick={handleDelete} className="button">
+                  Delete
+                </button>
+              </>
+            )}
+          </div>
+          {isErrorDeleting && (
+            <ErrorBlock
+              title="Failed to delete event"
+              message={
+                deleteError.info?.message ||
+                'Failed to delete event, please try again later.'
+              }
+            ></ErrorBlock>
+          )}
+        </Modal>
+      )}
       <Outlet />
       <Header>
         <Link to="/events" className="nav-item">
